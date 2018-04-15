@@ -15,14 +15,14 @@ namespace idp
         }
         SharedPtr(T* ptr)
             : m_ptrToObject(ptr)
-            , m_countOfObjects(new size_t(1))
+            , m_countOfObjects(new std::atomic<size_t>(1))
         {
         }
 
         SharedPtr(const SharedPtr<T>& other)
             : m_ptrToObject(other.m_ptrToObject)
+            , m_countOfObjects(other.m_countOfObjects)
         {
-            m_countOfObjects.exchange(other.m_countOfObjects);
             (*m_countOfObjects) ++;
         }
 
@@ -47,7 +47,7 @@ namespace idp
             }
 
             m_ptrToObject = other.m_ptrToObject;
-            m_countOfObjects.exchange(other.m_countOfObjects);
+            m_countOfObjects =other.m_countOfObjects;
             (*m_countOfObjects) ++;
 
             return *this;
@@ -59,7 +59,7 @@ namespace idp
             idp::SharedPtr<T> ptr;
             T* tmpObject = new T(args...);
             ptr.m_ptrToObject = tmpObject;
-            ptr.m_countOfObjects = new size_t(1);
+            ptr.m_countOfObjects = new std::atomic<size_t>(1);
 
             return ptr;
         }
@@ -92,13 +92,13 @@ namespace idp
             return *m_countOfObjects;
         }
 
-        void SetCountPtr(size_t* count)
+        void SetCountPtr(std::atomic<size_t>* count)
         {
             m_countOfObjects = count;
         }
 
     private:
         T* m_ptrToObject;
-        std::atomic<size_t*> m_countOfObjects;
+        std::atomic<size_t>* m_countOfObjects;
     };
 }
