@@ -2,7 +2,7 @@
 #include "SharedFromThis.h"
 #include <iostream>
 
-class TestUnit : public SharedFromThis
+class TestUnit : public SharedFromThis<TestUnit>
 {
 public:
     TestUnit(std::string&& name)

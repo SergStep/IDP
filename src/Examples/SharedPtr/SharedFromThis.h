@@ -4,19 +4,20 @@
 
 class TestUnit;
 
+template <typename T>
 class SharedFromThis
 {
 public:
-    SharedFromThis(TestUnit* testUnit)
+    SharedFromThis(T* testUnit)
         : m_count( new std::atomic<size_t>(0))
         , m_testUnit(testUnit)
     {
     }
 
     template<typename... Args>
-    idp::SharedPtr<TestUnit> GetShared()
+    idp::SharedPtr<T> GetShared()
     {
-        idp::SharedPtr<TestUnit> ptr(m_testUnit);
+        idp::SharedPtr<T> ptr(m_testUnit);
         ++ *m_count;
         ptr.SetCountPtr(m_count);
 
@@ -25,5 +26,5 @@ public:
 
 protected:
     std::atomic<size_t>* m_count;
-    TestUnit* m_testUnit;
+    T* m_testUnit;
 };
