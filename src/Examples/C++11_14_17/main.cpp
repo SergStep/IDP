@@ -10,6 +10,16 @@
 #include <chrono>
 #include <mutex>
 #include <unordered_set>
+#include <utility>
+#include <iomanip>
+#include <iostream>
+#include <assert.h>
+#include <shared_mutex>
+
+
+//#include <optional> //No such file or directory
+//#include <dynarray>
+
 
 void foo(int* p)
 {
@@ -152,7 +162,8 @@ private:
     std::string m_name = "Serg";
 };
 
-int Sum(int a, int b)
+//Return type deduction for normal functions c++14
+auto Sum(int a, int b)
 {
     return a + b;
 }
@@ -287,8 +298,94 @@ void UnorderedSet()
     }
 }
 
+//***************C++14*********************//
+
+//Return type deduction for normal functions
+template <class T> void run(T&& runnable)
+{
+    runnable();
+}
+
+//polymorphic expressions for lambda
+void f1(int (*)(int))   { }
+void f2(char (*)(int))  { }
+
+void g(int (*)(int))    { }  // #1
+void g(char (*)(char))  { }  // #2
+
+void h(int (*)(int))    { }   // #3
+void h(char (*)(int))   { }   // #4
+
+
+//variadic templates
+//universal links
+auto vglambda = [](auto printer) {
+   return [=](auto&& ... ts) {   // OK: ts - это упакованные параметры функции
+       printer(std::forward<decltype(ts)>(ts)...);
+   };
+};
+
+auto PolymorphicExpressionsLambda()
+{
+    auto glambda = [](auto a) { return a; };
+    f1(glambda);  // OK
+    //f2(glambda);  // ошибка: ID не конвертируем
+    //g(glambda);   // ошибка: двусмысленно
+    h(glambda);   // OK: вызывает #3, так как может быть сконвертировано из ID
+    int& (*fpi)(int*) = [](auto* a) -> auto& { return *a; }; // OK
+}
+
+//while, switch, if, for, do-while
+constexpr int constexpr1(int x, int n) // OK
+{
+    int r = 1;
+    while (--n > 0) r *= x;
+    {
+        switch(n)
+        {
+        case 1:
+            break;
+        default:
+            if (n == 2)
+            {
+                r = 2;
+            }
+        }
+    }
+    return r;
+}
+
+//quoted strings
+void QuotedStrings()
+{
+    std::stringstream ss;
+    std::string original = "foolish me";
+    std::string round_trip;
+
+    ss << std::quoted(original);
+    ss >> std::quoted(round_trip);
+
+    std::cout << original;     // вывод: foolish me
+    std::cout << round_trip;   // вывод: foolish me
+
+    assert(original == round_trip);
+}
+
+//компилятор будет выдавать предупреждение
+[[deprecated("use 'QuotedStrings' instead")]] void Fun();
+
+//std::optional
+/*Попытается преобразовать число в строке в int
+std::optional<int> Str2int(std::string string)
+{
+    return string;
+}
+*/
+
 int main()
 {
+//***************C++11*********************//
+
     //range-based loops
     //auto
     RangeBasedLoop_Auto();
@@ -357,6 +454,76 @@ int main()
     //std::hash
     UnorderedSet();
 
-    return 0;
+//***************C++14*********************//
+
+//Return type deduction for normal functions
+auto sum = Sum(2, 3);
+
+//capture-by-move for lambda
+std::unique_ptr<int> result(new int{42});
+auto cbm = [ result{std::move(result)} ](){std::cout << *result << std::endl;};
+// - result будет напрямую инициализирован перемещением result
+run(cbm);
+
+//polymorphic expressions for lambda
+// - используется auto тип-спецификатор, означающий обобщенный (шаблонный) лямбда параметр
+// - преобразование из лямбда функции, не захватыющей значения, к соответствующему указателю-на-функцию
+
+PolymorphicExpressionsLambda();
+
+//variadic templates
+//universal links
+auto print = vglambda( [](auto v1, auto v2, auto v3)
+                       { std::cout << v1 << v2 << v3; } );
+print(1, 'a', 3.14);  // OK: выводит 1a3.14
+
+//while, switch, if, for, do-while
+constexpr1(1, 2); // OK
+
+//make_unique
+auto Unique = std::make_unique<std::string>("Hi");
+
+//std::exchange
+std::vector<int> v;
+std::exchange(v, {1,2,3,4});
+
+//quoted strings
+QuotedStrings();
+
+
+
+//Освобождение памяти определенного размера
+/*
+void operator delete(void* ptr, std::size_t size) noexcept;
+void operator delete(void* ptr, std::size_t size, const std::nothrow_t&) noexcept;
+void operator delete[](void* ptr, std::size_t size) noexcept;
+void operator delete[](void* ptr, std::size_t size, const std::nothrow_t&) noexcept;
+*/
+
+//std::dynarray<int> d(5);   // can use stack memory for elements
+//auto p = new std::dynarray<int>(6);  // must use heap memory for elements
+
+
+//***************C++17*********************//
+
+//std::optional
+/*Попытается преобразовать число в строке в int
+std::optional<int> number = Str2int("123")*/
+
+//shared_mutex and shared_lock
+//иногда появляется необходимость дать к некоторому объекту множественный доступ на чтение или уникальный доступ на запись:
+
+/*std::shared_mutex rwmutex;
+{
+  std::shared_lock<std::shared_mutex> std::read_lock(rwmutex);
+  // чтение
 }
+{
+  std::unique_lock<std::shared_mutex> std::write_lock(rwmutex); // или lock_guard
+  // запись
+}*/
+
+return 0;
+}
+
 
