@@ -15,10 +15,10 @@
 #include <iostream>
 #include <assert.h>
 #include <shared_mutex>
-
-
-//#include <optional> //No such file or directory
-//#include <dynarray>
+#include <cassert>
+#include <optional> //No such file or directory
+#include <dynarray>
+#include <filesystem>
 
 
 void foo(int* p)
@@ -371,16 +371,101 @@ void QuotedStrings()
     assert(original == round_trip);
 }
 
+//***************C++17*********************//
+
 //компилятор будет выдавать предупреждение
 [[deprecated("use 'QuotedStrings' instead")]] void Fun();
 
 //std::optional
-/*Попытается преобразовать число в строке в int
+//Попытается преобразовать число в строке в int
 std::optional<int> Str2int(std::string string)
 {
     return string;
 }
-*/
+
+//structural bindings
+void StructuralBindings()
+{
+    //компилятор сам определит тип переменных a, b и c
+    auto [a, b, c] = std::tuple(32, "hello"s, 13.9)
+
+    std::map<std::string, std::string> map;
+    auto [iter1, succeed1] = map.try_emplace("k1", "hello");
+    auto [iter, succeed2] = map.try_emplace("k1", "hi");
+    auto [iter, succeed3] = map.try_emplace("nk1", "hi");
+
+    assert(succeed1);
+    assert(!succeed2);
+    assert(succeed3);
+
+    // можно раскладывать key и value прямо в range-based for
+    for (auto&& [key, value] : map)
+    {
+        std::cout << key << ": " << value << "\n";
+    }
+}
+
+//automatic deduction guides
+void AutomaticDeductionGuides()
+{
+    //пишем: std::pair{777, "hш"s}, компилятор сам выведет тип
+    std::vector v{std::vector{34532, 2342323}};
+
+    // Это vector<int>, а не vector<vector<int>>
+    static_assert(std::is_same_v<std::vector<int>, decltype(v)>);
+
+    // Размер равен двум
+    assert(v.size() == 2);
+}
+
+//nested namespace definitions
+namespace space1::space2::space3
+{
+    int aaa = 0;
+    // ...ваши классы и функции...
+}
+
+//fallthrough
+//завершайте все блоки case, кроме последнего, либо атрибутом [[fallthrough]], либо инструкцией break;
+//в GCC ставим -Wimplicit-fallthrough, теперь каждый case, не имеющий атрибута fallthrough, будет порождать предупреждение
+enum class option { A, B, C };
+
+void Fallthrough(option value)
+{
+    switch (value)
+    {
+    case option::A:
+        // ...
+    case option::B: // warning: unannotated fall-through between
+                    //          switch labels
+        // ...
+        [[fallthrough]];
+    case option::C: // no warning
+        // ...
+        break;
+    }
+}
+
+//nodiscard
+//Чтобы не забыть проверить ошибки, если об ошибке выполнения операции сообщает код возврата, возвращённый из функции.
+class [[nodiscard]] error_code { /* ... */ };
+
+error_code bar();
+
+voidNodiscard()
+{
+    // warning: ignoring return value of function declared
+    //          with warn_unused_result attribute
+    bar();
+}
+
+//std::string_view
+//string_view легко конструируется и из std::string и из const char* без дополнительного выделения памяти.
+std::string GetStr(std::string_view str)
+{
+    // std::string_view str тут в качестве невладеющего параметра-строки
+    // передавать параметром можно, возвращать - нет!
+}
 
 int main()
 {
@@ -456,72 +541,119 @@ int main()
 
 //***************C++14*********************//
 
-//Return type deduction for normal functions
-auto sum = Sum(2, 3);
+    //Return type deduction for normal functions
+    auto sum = Sum(2, 3);
 
-//capture-by-move for lambda
-std::unique_ptr<int> result(new int{42});
-auto cbm = [ result{std::move(result)} ](){std::cout << *result << std::endl;};
-// - result будет напрямую инициализирован перемещением result
-run(cbm);
+    //capture-by-move for lambda
+    std::unique_ptr<int> result(new int{42});
+    auto cbm = [ result{std::move(result)} ](){std::cout << *result << std::endl;};
+    // - result будет напрямую инициализирован перемещением result
+    run(cbm);
 
-//polymorphic expressions for lambda
-// - используется auto тип-спецификатор, означающий обобщенный (шаблонный) лямбда параметр
-// - преобразование из лямбда функции, не захватыющей значения, к соответствующему указателю-на-функцию
+    //polymorphic expressions for lambda
+    // - используется auto тип-спецификатор, означающий обобщенный (шаблонный) лямбда параметр
+    // - преобразование из лямбда функции, не захватыющей значения, к соответствующему указателю-на-функцию
 
-PolymorphicExpressionsLambda();
+    PolymorphicExpressionsLambda();
 
-//variadic templates
-//universal links
-auto print = vglambda( [](auto v1, auto v2, auto v3)
-                       { std::cout << v1 << v2 << v3; } );
-print(1, 'a', 3.14);  // OK: выводит 1a3.14
+    //variadic templates
+    //universal links
+    auto print = vglambda( [](auto v1, auto v2, auto v3)
+                           { std::cout << v1 << v2 << v3; } );
+    print(1, 'a', 3.14);  // OK: выводит 1a3.14
 
-//while, switch, if, for, do-while
-constexpr1(1, 2); // OK
+    //while, switch, if, for, do-while
+    constexpr1(1, 2); // OK
 
-//make_unique
-auto Unique = std::make_unique<std::string>("Hi");
+    //make_unique
+    auto Unique = std::make_unique<std::string>("Hi");
 
-//std::exchange
-std::vector<int> v;
-std::exchange(v, {1,2,3,4});
+    //std::exchange
+    std::vector<int> v;
+    std::exchange(v, {1,2,3,4});
 
-//quoted strings
-QuotedStrings();
+    //quoted strings
+    QuotedStrings();
+
+    //Освобождение памяти определенного размера
+
+    void operator delete(void* ptr, std::size_t size) noexcept;
+    void operator delete(void* ptr, std::size_t size, const std::nothrow_t&) noexcept;
+    void operator delete[](void* ptr, std::size_t size) noexcept;
+    void operator delete[](void* ptr, std::size_t size, const std::nothrow_t&) noexcept;
 
 
-
-//Освобождение памяти определенного размера
-/*
-void operator delete(void* ptr, std::size_t size) noexcept;
-void operator delete(void* ptr, std::size_t size, const std::nothrow_t&) noexcept;
-void operator delete[](void* ptr, std::size_t size) noexcept;
-void operator delete[](void* ptr, std::size_t size, const std::nothrow_t&) noexcept;
-*/
-
-//std::dynarray<int> d(5);   // can use stack memory for elements
-//auto p = new std::dynarray<int>(6);  // must use heap memory for elements
+    std::dynarray<int> d(5);   // can use stack memory for elements
+    auto p = new std::dynarray<int>(6);  // must use heap memory for elements
 
 
 //***************C++17*********************//
 
-//std::optional
-/*Попытается преобразовать число в строке в int
-std::optional<int> number = Str2int("123")*/
+    //std::optional
+    //Попытается преобразовать число в строке в int
+    std::optional<int> number = Str2int("123")
 
-//shared_mutex and shared_lock
-//иногда появляется необходимость дать к некоторому объекту множественный доступ на чтение или уникальный доступ на запись:
+    //shared_mutex and shared_lock
+    //иногда появляется необходимость дать к некоторому объекту множественный доступ на чтение или уникальный доступ на запись:
 
-/*std::shared_mutex rwmutex;
-{
-  std::shared_lock<std::shared_mutex> std::read_lock(rwmutex);
-  // чтение
-}
-{
-  std::unique_lock<std::shared_mutex> std::write_lock(rwmutex); // или lock_guard
-  // запись
-}*/
+    std::shared_mutex rwmutex;
+    {
+      std::shared_lock<std::shared_mutex> std::read_lock(rwmutex);
+      // чтение
+    }
+    {
+      std::unique_lock<std::shared_mutex> std::write_lock(rwmutex); // или lock_guard
+      // запись
+    }
+
+    //structural bindings
+    StructuralBindings();
+
+    //automatic deduction guides
+    //пишем: std::pair{777, "hш"s}, компилятор сам выведет тип
+    AutomaticDeductionGuides()
+
+    //nested namespace definitions
+    space1::space2::space3::aaa = 3;
+
+    //maybe_unused
+    //для переменных, которые нужны только для проверки в assert
+    [[maybe_unused]] auto result = DoSystemCall();
+    assert(result >= 0);
+
+    //fallthrough
+    //завершайте все блоки case, кроме последнего, либо атрибутом [[fallthrough]], либо инструкцией break;
+    //в GCC ставим -Wimplicit-fallthrough, теперь каждый case, не имеющий атрибута fallthrough, будет порождать предупреждение
+    Fallthrough()
+
+    //nodiscard
+    //Чтобы не забыть проверить ошибки, если об ошибке выполнения операции сообщает код возврата, возвращённый из функции.
+    Nodiscard()
+    class [[nodiscard]] error_code { /* ... */ };
+
+    error_code bar();
+
+    void foo()
+    {
+        // warning: ignoring return value of function declared
+        //          with warn_unused_result attribute
+        bar();
+    }
+
+    //std::string_view
+    //string_view легко конструируется и из std::string и из const char* без дополнительного выделения памяти.
+    char str[] = "Hi";
+    GetStr(str)
+
+    //std::size - можно получить размер с масива. Выдаст ошибку компиляции при попытке передать ей обычный указатель
+    //std::data - для получения изменяемого указателя начало строки, массива или std::vector<>
+
+    //std::filesystem
+    std::filesystem::path p1 = "/a/b/"; // as if "a/b/." for lexicographical iteration
+    std::filesystem::path p2 = "/a/b/#";
+    p1.compare(p2);
+    p1.compare("a/b/_");
+
 
 return 0;
 }
