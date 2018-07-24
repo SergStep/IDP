@@ -377,10 +377,16 @@ void QuotedStrings()
 [[deprecated("use 'QuotedStrings' instead")]] void Fun();
 
 //std::optional
-//Попытается преобразовать число в строке в int
-std::optional<int> Str2int(std::string string)
+bool g_isUserLogin = false;
+const std::string s_userName("root");
+std::optional<std::string> FindUser()
 {
-    return string;
+    if (g_isUserLogin)
+    {
+        return s_userName;
+    }
+
+    return std::nullopt; // то же самое что и { };
 }
 
 //structural bindings
@@ -590,8 +596,12 @@ int main()
 //***************C++17*********************//
 
     //std::optional
-    //Попытается преобразовать число в строке в int
-    std::optional<int> number = Str2int("123")
+    //Используется, когда отсутствие значения не является ошибкой.
+    std::optional<std::string> userNick = FindUser;
+    if (userNick)
+    {
+        std::count << userNick << std::endl;
+    }
 
     //shared_mutex and shared_lock
     //иногда появляется необходимость дать к некоторому объекту множественный доступ на чтение или уникальный доступ на запись:
