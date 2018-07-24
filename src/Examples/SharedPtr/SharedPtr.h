@@ -56,12 +56,8 @@ namespace idp
         template<typename... Args>
         static idp::SharedPtr<T> MakeShared(Args &&... args)
         {
-            idp::SharedPtr<T> ptr;
-            T* tmpObject = new T(args...);
-            ptr.m_ptrToObject = tmpObject;
-            ptr.m_countOfObjects = new std::atomic<size_t>(1);
-
-            return ptr;
+            //возвращается временный объект, стандарт регламентирует удаление такого объекта при появлении исключения
+            return idp::SharedPtr<T>(new T(args...));
         }
 
         ~SharedPtr()
