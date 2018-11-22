@@ -33,18 +33,7 @@ namespace idp
                 return *this;
             }
 
-            if (m_countOfObjects)
-            {
-                if (*m_countOfObjects == 1)
-                {
-                    delete m_countOfObjects;
-                    delete m_ptrToObject;
-                }
-                else
-                {
-                    (*m_countOfObjects) --;
-                }
-            }
+            CountDecrementionAndRelease();
 
             m_ptrToObject = other.m_ptrToObject;
             m_countOfObjects =other.m_countOfObjects;
@@ -62,20 +51,7 @@ namespace idp
 
         ~SharedPtr()
         {
-            if (m_countOfObjects == nullptr)
-            {
-                return;
-            }
-
-            if (*m_countOfObjects == 1)
-            {
-                delete m_countOfObjects;
-                delete m_ptrToObject;
-            }
-            else
-            {
-                (*m_countOfObjects) --;
-            }
+            CountDecrementionAndRelease();
         }
 
         size_t GetCount() const
@@ -91,6 +67,25 @@ namespace idp
         void SetCountPtr(std::atomic<size_t>* count)
         {
             m_countOfObjects = count;
+        }
+
+    private:
+        void CountDecrementionAndRelease()
+        {
+            if (m_countOfObjects == nullptr)
+            {
+                return;
+            }
+
+            if (*m_countOfObjects == 1)
+            {
+                delete m_countOfObjects;
+                delete m_ptrToObject;
+            }
+            else
+            {
+                (*m_countOfObjects) --;
+            }
         }
 
     private:
