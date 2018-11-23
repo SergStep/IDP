@@ -39,6 +39,18 @@ int main()
     }
     std::cout << "sharedFromThis1->GetCount " << sharedFromThis1.GetCount() << std::endl;
 
+    std::cout << "Move semantic --------------------" << std::endl;
+    idp::SharedPtr<TestUnit> sharedMovedUnit1(new TestUnit("Moved TestUnit 1"));
+    idp::SharedPtr<TestUnit> sharedMovedUnit2(sharedMovedUnit1);
+    idp::SharedPtr<TestUnit> sharedMovedUnit3(new TestUnit("Moved TestUnit 3"));
+    idp::SharedPtr<TestUnit> sharedMovedUnit4(std::move(sharedMovedUnit1));
+    sharedMovedUnit3 = std::move(sharedMovedUnit2);
+
+    std::cout << "sharedMovedUnit1->GetCount " << sharedMovedUnit1.GetCount() << std::endl;
+    std::cout << "sharedMovedUnit2->GetCount " << sharedMovedUnit2.GetCount() << std::endl;
+    std::cout << "sharedMovedUnit3->GetCount " << sharedMovedUnit3.GetCount() << std::endl;
+    std::cout << "sharedMovedUnit4->GetCount " << sharedMovedUnit4.GetCount() << std::endl;
+
     std::cout << "Destructions: ####################" << std::endl;
 
     return 0;

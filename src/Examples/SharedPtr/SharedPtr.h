@@ -26,7 +26,15 @@ namespace idp
             (*m_countOfObjects) ++;
         }
 
-        SharedPtr<T> operator=(SharedPtr<T>& other)
+        SharedPtr(SharedPtr<T>&& other)
+            : m_ptrToObject(other.m_ptrToObject)
+            , m_countOfObjects(other.m_countOfObjects)
+        {
+            other.m_countOfObjects = nullptr;
+            other.m_ptrToObject = nullptr;
+        }
+
+        SharedPtr<T> operator=(const SharedPtr<T>& other)
         {
             if (this == &other)
             {
@@ -38,6 +46,24 @@ namespace idp
             m_ptrToObject = other.m_ptrToObject;
             m_countOfObjects =other.m_countOfObjects;
             (*m_countOfObjects) ++;
+
+            return *this;
+        }
+
+        SharedPtr<T> operator=(SharedPtr<T>&& other)
+        {
+            if (this == &other)
+            {
+                return *this;
+            }
+
+            CountDecrementionAndRelease();
+
+            m_ptrToObject = other.m_ptrToObject;
+            m_countOfObjects =other.m_countOfObjects;
+
+            other.m_countOfObjects = nullptr;
+            other.m_ptrToObject = nullptr;
 
             return *this;
         }
