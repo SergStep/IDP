@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdio>
 #include <atomic>
+#include "ObjectAndCount.h"
 
 namespace idp
 {
@@ -68,12 +69,17 @@ namespace idp
             return *this;
         }
 
-        template<typename... Args>
+        template<class ... Args>
         static idp::SharedPtr<T> MakeShared(Args &&... args)
         {
-            //возвращается временный объект, стандарт регламентирует удаление такого объекта при появлении исключения
-            return idp::SharedPtr<T>(new T(args...));
+            idp::SharedPtr<T> ptr;
+            ptr.m_objectAndCount = new ObjectAndCount<T>(args...);
+            ptr.m_ptrToObject = &ptr.m_objectAndCount->m_object;
+            ptr.m_countOfObjects = &ptr.m_objectAndCount->m_count;
+
+            return ptr;
         }
+
 
         ~SharedPtr()
         {
@@ -105,8 +111,15 @@ namespace idp
 
             if (*m_countOfObjects == 1)
             {
-                delete m_countOfObjects;
-                delete m_ptrToObject;
+                if(m_objectAndCount == nullptr)
+                {
+                    delete m_countOfObjects;
+                    delete m_ptrToObject;
+                }
+                else
+                {
+                    delete m_objectAndCount;
+                }
             }
             else
             {
@@ -117,5 +130,6 @@ namespace idp
     private:
         T* m_ptrToObject;
         std::atomic<size_t>* m_countOfObjects;
+        ObjectAndCount<T>* m_objectAndCount = nullptr;
     };
 }

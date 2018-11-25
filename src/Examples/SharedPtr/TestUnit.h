@@ -1,3 +1,4 @@
+#pragma once
 #include "SharedPtr.h"
 #include "SharedFromThis.h"
 #include <iostream>
@@ -7,7 +8,7 @@ class TestUnit : public SharedFromThis<TestUnit>
 public:
     TestUnit(std::string&& name)
         : SharedFromThis(this)
-        , m_name(std::move(name))
+        , m_name(name)
     {
         std::cout << "Constructor of the: " << m_name << std::endl;
     }
