@@ -7,7 +7,6 @@ struct ObjectAndCount
     ObjectAndCount(Args && ...args)
         : m_object(args...)
         , m_count(1)
-
     {
     }
 

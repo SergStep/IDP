@@ -20,6 +20,14 @@ namespace idp
         {
         }
 
+        SharedPtr(T* ptr, std::atomic<size_t>* countOfObjects)
+            : m_ptrToObject(ptr)
+            , m_countOfObjects(countOfObjects)
+        {
+            m_isFromThis = true;
+            (*m_countOfObjects) ++;
+        }
+
         SharedPtr(const SharedPtr<T>& other)
             : m_ptrToObject(other.m_ptrToObject)
             , m_countOfObjects(other.m_countOfObjects)
@@ -96,11 +104,6 @@ namespace idp
             return *m_countOfObjects;
         }
 
-        void SetCountPtr(std::atomic<size_t>* count)
-        {
-            m_countOfObjects = count;
-        }
-
     private:
         void CountDecrementionAndRelease()
         {
@@ -109,27 +112,29 @@ namespace idp
                 return;
             }
 
-            if (*m_countOfObjects == 1)
-            {
-                if(m_objectAndCount == nullptr)
-                {
-                    delete m_countOfObjects;
-                    delete m_ptrToObject;
-                }
-                else
-                {
-                    delete m_objectAndCount;
-                }
-            }
-            else
+            if (*m_countOfObjects != 1)
             {
                 (*m_countOfObjects) --;
+                return;
             }
+
+            if(m_objectAndCount != nullptr)
+            {
+                delete m_objectAndCount;
+                return;
+            }
+
+            if(!m_isFromThis)
+            {
+                delete m_countOfObjects;
+            }
+            delete m_ptrToObject;
         }
 
     private:
         T* m_ptrToObject;
         std::atomic<size_t>* m_countOfObjects;
         ObjectAndCount<T>* m_objectAndCount = nullptr;
+        bool m_isFromThis = false;
     };
 }

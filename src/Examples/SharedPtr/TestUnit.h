@@ -7,7 +7,7 @@ class TestUnit : public SharedFromThis<TestUnit>
 {
 public:
     TestUnit(std::string&& name)
-        : SharedFromThis(this)
+        : SharedFromThis()
         , m_name(name)
     {
         std::cout << "Constructor of the: " << m_name << std::endl;
