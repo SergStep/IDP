@@ -1,0 +1,3 @@
+[submodule "src/Cross/Catch"]
+	path = src/Cross/Catch
+	url = https://github.com/catchorg/Catch2.git
