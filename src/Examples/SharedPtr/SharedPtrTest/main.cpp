@@ -21,17 +21,18 @@ int main()
 
     std::cout << "makeSared->GetCount ---------------" << std::endl;
     idp::SharedPtr<TestUnit> makeShared1 = idp::SharedPtr<TestUnit>::MakeShared("TestUnit MakeShared");
-    std::cout << "makeSared->GetName " << makeShared1.GetCount() << std::endl;
+    std::cout << "makeSared1->GetName " << makeShared1.GetCount() << std::endl;
     {
         idp::SharedPtr<TestUnit> makeShared2(makeShared1);
-        std::cout << "MakeShared->GetName " << makeShared1.GetCount() << std::endl;
-        std::cout << "MakeShared->GetName " << makeShared2.GetCount() << std::endl;
+        std::cout << "MakeShared1->GetName " << makeShared1.GetCount() << std::endl;
+        std::cout << "MakeShared2->GetName " << makeShared2.GetCount() << std::endl;
     }
-    std::cout << "MakeShared->GetName " << makeShared1.GetCount() << std::endl;
+    std::cout << "MakeShared1->GetName " << makeShared1.GetCount() << std::endl;
 
     std::cout << "SharedFromThis --------------------" << std::endl;
     TestUnit* unitForShared = new TestUnit("sharedFromThis");
     idp::SharedPtr<TestUnit> sharedFromThis1 = unitForShared->GetShared();
+    std::cout << "sharedFromThis1->GetCount " << sharedFromThis1.GetCount() << std::endl;
     {
         idp::SharedPtr<TestUnit> sharedFromThis2 = unitForShared->GetShared();
         std::cout << "sharedFromThis1->GetCount " << sharedFromThis1.GetCount() << std::endl;

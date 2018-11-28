@@ -1,3 +1,2 @@
-make_executable()
-
+add_all_subdirectories()
 
