@@ -59,3 +59,15 @@ TEST_CASE("Move semantic")
     REQUIRE(sharedMovedUnit3.GetCount() == 2);
     REQUIRE(sharedMovedUnit4.GetCount() == 2);
 }
+
+TEST_CASE("Destruction test")
+{
+    idp::SharedPtr<TestUnit> destructionTest(new TestUnit("Destruction Test"));
+    idp::SharedPtr<TestUnit> makeSharedForDestruction = idp::SharedPtr<TestUnit>::MakeShared("MakeShared for destruction test");
+    REQUIRE(destructionTest.GetCount() == 1);
+    REQUIRE(makeSharedForDestruction.GetCount() == 1);
+
+    destructionTest = makeSharedForDestruction;
+    REQUIRE(destructionTest.GetCount() == 2);
+    REQUIRE(makeSharedForDestruction.GetCount() == 2);
+}

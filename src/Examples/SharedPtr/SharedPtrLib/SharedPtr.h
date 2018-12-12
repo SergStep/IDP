@@ -31,6 +31,7 @@ namespace idp
         SharedPtr(const SharedPtr<T>& other)
             : m_ptrToObject(other.m_ptrToObject)
             , m_countOfObjects(other.m_countOfObjects)
+            , m_objectAndCount(other.m_objectAndCount)
         {
             (*m_countOfObjects) ++;
         }
@@ -38,9 +39,11 @@ namespace idp
         SharedPtr(SharedPtr<T>&& other)
             : m_ptrToObject(other.m_ptrToObject)
             , m_countOfObjects(other.m_countOfObjects)
+            , m_objectAndCount(other.m_objectAndCount)
         {
             other.m_countOfObjects = nullptr;
             other.m_ptrToObject = nullptr;
+            other.m_objectAndCount = nullptr;
         }
 
         SharedPtr<T> operator=(const SharedPtr<T>& other)
@@ -50,10 +53,11 @@ namespace idp
                 return *this;
             }
 
-            CountDecrementionAndRelease();
+            DecrementAndRelease();
 
             m_ptrToObject = other.m_ptrToObject;
-            m_countOfObjects =other.m_countOfObjects;
+            m_countOfObjects = other.m_countOfObjects;
+            m_objectAndCount = other.m_objectAndCount;
             (*m_countOfObjects) ++;
 
             return *this;
@@ -66,13 +70,15 @@ namespace idp
                 return *this;
             }
 
-            CountDecrementionAndRelease();
+            DecrementAndRelease();
 
             m_ptrToObject = other.m_ptrToObject;
-            m_countOfObjects =other.m_countOfObjects;
+            m_countOfObjects = other.m_countOfObjects;
+            m_objectAndCount = other.m_objectAndCount;
 
             other.m_countOfObjects = nullptr;
             other.m_ptrToObject = nullptr;
+            other.m_objectAndCount = nullptr;
 
             return *this;
         }
@@ -91,7 +97,7 @@ namespace idp
 
         ~SharedPtr()
         {
-            CountDecrementionAndRelease();
+            DecrementAndRelease();
         }
 
         size_t GetCount() const
@@ -105,7 +111,7 @@ namespace idp
         }
 
     private:
-        void CountDecrementionAndRelease()
+        void DecrementAndRelease()
         {
             if (m_countOfObjects == nullptr)
             {
