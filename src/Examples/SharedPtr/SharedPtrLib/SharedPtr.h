@@ -94,7 +94,6 @@ namespace idp
             return ptr;
         }
 
-
         ~SharedPtr()
         {
             DecrementAndRelease();
