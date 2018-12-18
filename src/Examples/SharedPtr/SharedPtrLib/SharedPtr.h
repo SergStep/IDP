@@ -2,6 +2,9 @@
 #include <cstdio>
 #include <atomic>
 #include "ObjectAndCount.h"
+#include "WeakPtr.h"
+#include <iostream>
+
 
 namespace idp
 {
@@ -44,6 +47,15 @@ namespace idp
             other.m_countOfObjects = nullptr;
             other.m_ptrToObject = nullptr;
             other.m_objectAndCount = nullptr;
+        }
+
+        SharedPtr(const WeakPtr<T>& other)
+            : m_ptrToObject(other.m_ptrToObject)
+            , m_countOfObjects(*(other.m_countOfObjects))
+            , m_objectAndCount(other.m_objectAndCount)
+            , m_isFromThis(other.m_isFromThis)
+        {
+            (*m_countOfObjects) ++;
         }
 
         SharedPtr<T> operator=(const SharedPtr<T>& other)
@@ -97,6 +109,8 @@ namespace idp
         ~SharedPtr()
         {
             DecrementAndRelease();
+            std::cout << "~SharedPtr()" << "\n";
+
         }
 
         size_t GetCount() const
@@ -110,6 +124,8 @@ namespace idp
         }
 
     private:
+        friend WeakPtr<T>;
+
         void DecrementAndRelease()
         {
             if (m_countOfObjects == nullptr)
@@ -126,6 +142,8 @@ namespace idp
             if(m_objectAndCount != nullptr)
             {
                 delete m_objectAndCount;
+                m_objectAndCount = nullptr;
+                m_countOfObjects = nullptr;
                 return;
             }
 

@@ -1,6 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 #include "TestUnit.h"
+#include "WeakPtr.h"
 
 TEST_CASE("General")
 {
@@ -70,4 +71,25 @@ TEST_CASE("Destruction test")
     destructionTest = makeSharedForDestruction;
     REQUIRE(destructionTest.GetCount() == 2);
     REQUIRE(makeSharedForDestruction.GetCount() == 2);
+}
+
+TEST_CASE("Weak Ptr")
+{
+    idp::WeakPtr<int> weakPtr;
+    REQUIRE(weakPtr.GetCount() == 0);
+    {
+        idp::SharedPtr<int> sharedPtr = idp::SharedPtr<int>::MakeShared(333);
+        REQUIRE(sharedPtr.GetCount() == 1);
+        REQUIRE(weakPtr.GetCount() == 0);
+
+        weakPtr = sharedPtr;
+        REQUIRE(sharedPtr.GetCount() == 1);
+        REQUIRE(weakPtr.GetCount() == 1);
+        REQUIRE(weakPtr.Lock().GetCount() == 2);
+
+
+        REQUIRE(sharedPtr.GetCount() == 1);
+        REQUIRE(weakPtr.GetCount() == 1);
+    }
+    REQUIRE(weakPtr.GetCount() == 0);
 }
