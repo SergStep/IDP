@@ -75,10 +75,10 @@ TEST_CASE("Destruction test")
 
 TEST_CASE("Weak Ptr")
 {
-    idp::WeakPtr<int> weakPtr;
+    idp::WeakPtr<TestUnit> weakPtr;
     REQUIRE(weakPtr.GetCount() == 0);
     {
-        idp::SharedPtr<int> sharedPtr = idp::SharedPtr<int>::MakeShared(333);
+        idp::SharedPtr<TestUnit> sharedPtr = idp::SharedPtr<TestUnit>::MakeShared("Weak Ptr TestUnit");
         REQUIRE(sharedPtr.GetCount() == 1);
         REQUIRE(weakPtr.GetCount() == 0);
 
@@ -87,9 +87,9 @@ TEST_CASE("Weak Ptr")
         REQUIRE(weakPtr.GetCount() == 1);
         REQUIRE(weakPtr.Lock().GetCount() == 2);
 
-
         REQUIRE(sharedPtr.GetCount() == 1);
         REQUIRE(weakPtr.GetCount() == 1);
     }
     REQUIRE(weakPtr.GetCount() == 0);
+    REQUIRE(weakPtr.Lock().GetCount() == 0);
 }

@@ -1,61 +1,70 @@
 #pragma once
 #include <cstdio>
-#include <atomic>
 #include "ObjectAndCount.h"
 #include "WeakPtr.h"
 #include <iostream>
 
-
 namespace idp
 {
+    void IncrementCounts(Counts* countsOfObjects)
+    {
+        countsOfObjects->m_countsOfObjects ++;
+        countsOfObjects->m_weakCount ++;
+    }
+
     template <typename T>
     class SharedPtr
     {
     public:
         SharedPtr()
             : m_ptrToObject(nullptr)
-            , m_countOfObjects(nullptr)
+            , m_countsOfObjects(nullptr)
         {
         }
         SharedPtr(T* ptr)
             : m_ptrToObject(ptr)
-            , m_countOfObjects(new std::atomic<size_t>(1))
+            , m_countsOfObjects(new Counts(1, 1))
         {
         }
 
-        SharedPtr(T* ptr, std::atomic<size_t>* countOfObjects)
+        SharedPtr(T* ptr, Counts** countsOfObjects)
             : m_ptrToObject(ptr)
-            , m_countOfObjects(countOfObjects)
         {
-            m_isFromThis = true;
-            (*m_countOfObjects) ++;
+            if(*countsOfObjects == nullptr)
+            {
+                *countsOfObjects = (new Counts(0, 0));
+            }
+            m_countsOfObjects = *countsOfObjects;
+            IncrementCounts(m_countsOfObjects);
         }
 
         SharedPtr(const SharedPtr<T>& other)
             : m_ptrToObject(other.m_ptrToObject)
-            , m_countOfObjects(other.m_countOfObjects)
+            , m_countsOfObjects(other.m_countsOfObjects)
             , m_objectAndCount(other.m_objectAndCount)
         {
-            (*m_countOfObjects) ++;
+            IncrementCounts(m_countsOfObjects);
         }
 
         SharedPtr(SharedPtr<T>&& other)
             : m_ptrToObject(other.m_ptrToObject)
-            , m_countOfObjects(other.m_countOfObjects)
+            , m_countsOfObjects(other.m_countsOfObjects)
             , m_objectAndCount(other.m_objectAndCount)
         {
-            other.m_countOfObjects = nullptr;
+            other.m_countsOfObjects = nullptr;
             other.m_ptrToObject = nullptr;
             other.m_objectAndCount = nullptr;
         }
 
         SharedPtr(const WeakPtr<T>& other)
             : m_ptrToObject(other.m_ptrToObject)
-            , m_countOfObjects(*(other.m_countOfObjects))
+            , m_countsOfObjects(other.m_countsOfObjects)
             , m_objectAndCount(other.m_objectAndCount)
-            , m_isFromThis(other.m_isFromThis)
         {
-            (*m_countOfObjects) ++;
+            if(m_countsOfObjects != nullptr && m_countsOfObjects->m_countsOfObjects != 0)
+            {
+                IncrementCounts(m_countsOfObjects);
+            }
         }
 
         SharedPtr<T> operator=(const SharedPtr<T>& other)
@@ -68,9 +77,9 @@ namespace idp
             DecrementAndRelease();
 
             m_ptrToObject = other.m_ptrToObject;
-            m_countOfObjects = other.m_countOfObjects;
+            m_countsOfObjects = other.m_countsOfObjects;
             m_objectAndCount = other.m_objectAndCount;
-            (*m_countOfObjects) ++;
+            IncrementCounts(m_countsOfObjects);
 
             return *this;
         }
@@ -85,10 +94,10 @@ namespace idp
             DecrementAndRelease();
 
             m_ptrToObject = other.m_ptrToObject;
-            m_countOfObjects = other.m_countOfObjects;
+            m_countsOfObjects = other.m_countsOfObjects;
             m_objectAndCount = other.m_objectAndCount;
 
-            other.m_countOfObjects = nullptr;
+            other.m_countsOfObjects = nullptr;
             other.m_ptrToObject = nullptr;
             other.m_objectAndCount = nullptr;
 
@@ -100,8 +109,8 @@ namespace idp
         {
             idp::SharedPtr<T> ptr;
             ptr.m_objectAndCount = new ObjectAndCount<T>(args...);
-            ptr.m_ptrToObject = &ptr.m_objectAndCount->m_object;
-            ptr.m_countOfObjects = &ptr.m_objectAndCount->m_count;
+            ptr.m_ptrToObject = reinterpret_cast<T*>(ptr.m_objectAndCount->m_object);
+            ptr.m_countsOfObjects = &ptr.m_objectAndCount->m_count;
 
             return ptr;
         }
@@ -109,18 +118,16 @@ namespace idp
         ~SharedPtr()
         {
             DecrementAndRelease();
-            std::cout << "~SharedPtr()" << "\n";
-
         }
 
         size_t GetCount() const
         {
-            if(m_countOfObjects == nullptr)
+            if(m_countsOfObjects == nullptr)
             {
                 return 0;
             }
 
-            return *m_countOfObjects;
+            return m_countsOfObjects->m_countsOfObjects;
         }
 
     private:
@@ -128,36 +135,41 @@ namespace idp
 
         void DecrementAndRelease()
         {
-            if (m_countOfObjects == nullptr)
+            if (m_countsOfObjects == nullptr)
             {
                 return;
             }
 
-            if (*m_countOfObjects != 1)
+            (m_countsOfObjects->m_weakCount) --;
+            if (m_countsOfObjects->m_countsOfObjects == 0)
             {
-                (*m_countOfObjects) --;
+                return;
+            }
+
+            (m_countsOfObjects->m_countsOfObjects) --;
+            if (m_countsOfObjects->m_countsOfObjects != 0)
+            {
                 return;
             }
 
             if(m_objectAndCount != nullptr)
             {
-                delete m_objectAndCount;
-                m_objectAndCount = nullptr;
-                m_countOfObjects = nullptr;
+                T* obj = reinterpret_cast<T*>(m_objectAndCount->m_object);
+                obj->~T();
+                if(m_countsOfObjects->m_weakCount == 0)
+                {
+                    delete m_objectAndCount;
+                }
                 return;
             }
 
-            if(!m_isFromThis)
-            {
-                delete m_countOfObjects;
-            }
+            delete m_countsOfObjects;
             delete m_ptrToObject;
         }
 
     private:
         T* m_ptrToObject;
-        std::atomic<size_t>* m_countOfObjects;
+        Counts* m_countsOfObjects;
         ObjectAndCount<T>* m_objectAndCount = nullptr;
-        bool m_isFromThis = false;
     };
 }

@@ -14,30 +14,29 @@ namespace idp
     public:
         WeakPtr()
             : m_ptrToObject(nullptr)
-            , m_weakCount(nullptr)
+            , m_countsOfObjects(nullptr)
         {
         }
         WeakPtr(T* ptr)
             : m_ptrToObject(ptr)
-            , m_weakCount(new std::atomic<size_t>(1))
+            , m_countsOfObjects(new Counts(0, 1))
         {
         }
 
         WeakPtr(const WeakPtr<T>& other)
             : m_ptrToObject(other.m_ptrToObject)
-            , m_weakCount(other.m_weakCount)
-            , m_countOfObjects(other.m_countOfObjects)
+            , m_countsOfObjects(other.m_countsOfObjects)
         {
-            (*m_weakCount) ++;
+            (m_countsOfObjects->m_weakCount) ++;
         }
 
         WeakPtr(const SharedPtr<T>& other)
             : m_ptrToObject(other.m_ptrToObject)
-            , m_weakCount(new std::atomic<size_t>(1))
-            , m_countOfObjects(&other.m_countOfObjects)
+            , m_countsOfObjects(other.m_countsOfObjects)
             , m_objectAndCount(other.m_objectAndCount)
             , m_isFromThis(other.m_isFromThis)
         {
+            (m_countsOfObjects->m_weakCount) ++;
         }
 
         WeakPtr<T> operator=(const WeakPtr<T>& other)
@@ -50,9 +49,8 @@ namespace idp
             Decrement();
 
             m_ptrToObject = other.m_ptrToObject;
-            m_weakCount = other.m_weakCount;
-            m_countOfObjects = other.m_countOfObjects;
-            (*m_weakCount) ++;
+            m_countsOfObjects = other.m_countsOfObjects;
+            (m_countsOfObjects->m_weakCount) ++;
 
             return *this;
         }
@@ -62,10 +60,9 @@ namespace idp
             Decrement();
 
             m_ptrToObject = other.m_ptrToObject;
-            m_weakCount = new std::atomic<size_t>(1);
-            m_countOfObjects = &other.m_countOfObjects;
+            m_countsOfObjects = other.m_countsOfObjects;
             m_objectAndCount = other.m_objectAndCount;
-            m_isFromThis = other.m_isFromThis;
+            (m_countsOfObjects->m_weakCount) ++;
 
             return *this;
         }
@@ -82,12 +79,12 @@ namespace idp
 
         size_t GetCount() const
         {
-            if(m_countOfObjects == nullptr || *m_countOfObjects == nullptr)
+            if(m_countsOfObjects == nullptr)
             {
                 return 0;
             }
 
-            return **m_countOfObjects;
+            return m_countsOfObjects->m_countsOfObjects;
         }
 
     private:
@@ -95,24 +92,23 @@ namespace idp
 
         void Decrement()
         {
-            if (m_weakCount == nullptr)
+            if (m_countsOfObjects == nullptr)
             {
                 return;
             }
 
-            if (*m_weakCount != 1)
+            if (m_countsOfObjects->m_weakCount != 1)
             {
-                (*m_weakCount) --;
+                (m_countsOfObjects->m_weakCount) --;
                 return;
             }
 
-            delete m_weakCount;
+            delete m_countsOfObjects;
         }
 
     private:
         T* m_ptrToObject;
-        std::atomic<size_t>* m_weakCount;
-        std::atomic<size_t>* const* m_countOfObjects = nullptr;
+        Counts* m_countsOfObjects;
         ObjectAndCount<T>* m_objectAndCount = nullptr;
         bool m_isFromThis = false;
     };

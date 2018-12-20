@@ -1,6 +1,7 @@
 #pragma once
 #include <atomic>
 #include "SharedPtr.h"
+#include "ObjectAndCount.h"
 
 class TestUnit;
 
@@ -9,16 +10,15 @@ class SharedFromThis
 {
 public:
     SharedFromThis()
-        : m_count(0)
     {
     }
 
     template<typename... Args>
     idp::SharedPtr<T> GetShared()
     {
-        return idp::SharedPtr<T>(reinterpret_cast<T*>(this), &m_count);
+        return idp::SharedPtr<T>(reinterpret_cast<T*>(this), &m_counts);
     }
 
 protected:
-    std::atomic<size_t> m_count;
+    Counts* m_counts = nullptr;
 };

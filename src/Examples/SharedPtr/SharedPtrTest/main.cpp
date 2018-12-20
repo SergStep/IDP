@@ -58,10 +58,10 @@ int main()
     }
     {
         std::cout << "Weak Ptr --------------------" << std::endl;
-        idp::WeakPtr<int> weakPtr;
+        idp::WeakPtr<TestUnit> weakPtr;
         std::cout << "weakPtr " << weakPtr.GetCount() << std::endl;
         {
-            idp::SharedPtr<int> sharedPtr = idp::SharedPtr<int>::MakeShared(333);
+            idp::SharedPtr<TestUnit> sharedPtr = idp::SharedPtr<TestUnit>::MakeShared("Weak Ptr TestUnit");
             std::cout << "sharedPtr " << sharedPtr.GetCount() << std::endl;
             std::cout << "weakPtr " << weakPtr.GetCount() << std::endl;
 
@@ -74,6 +74,7 @@ int main()
             std::cout << "weakPtr " << weakPtr.GetCount() << std::endl;
         }
         std::cout << "weakPtr " << weakPtr.GetCount() << std::endl;
+        std::cout << "weakPtr.Lock() " << weakPtr.Lock().GetCount() << std::endl;
     }
 
     return 0;
