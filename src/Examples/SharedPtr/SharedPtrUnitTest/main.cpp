@@ -93,3 +93,12 @@ TEST_CASE("Weak Ptr")
     REQUIRE(weakPtr.GetCount() == 0);
     REQUIRE(weakPtr.Lock().GetCount() == 0);
 }
+
+TEST_CASE("Size")
+{
+    idp::WeakPtr<TestUnit> weakPtr;
+    idp::SharedPtr<TestUnit> sharedPtr = idp::SharedPtr<TestUnit>::MakeShared("Size");
+
+    REQUIRE(sizeof(weakPtr) == sizeof(char*));
+    REQUIRE(sizeof(sharedPtr) == sizeof(char*));
+}

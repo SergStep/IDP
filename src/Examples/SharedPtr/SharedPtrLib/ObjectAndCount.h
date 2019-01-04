@@ -26,3 +26,18 @@ struct ObjectAndCount
     Counts m_count;
     char m_object[sizeof(_T)];
 };
+
+template<class _T>
+struct Units
+{
+    Units(_T* ptr = nullptr, Counts* countsOfObjects = nullptr, ObjectAndCount<_T>* objectAndCount = nullptr)
+        : m_ptrToObject(ptr)
+        , m_countsOfObjects(countsOfObjects)
+        , m_objectAndCount(objectAndCount)
+    {
+    }
+
+    _T* m_ptrToObject;
+    Counts* m_countsOfObjects;
+    ObjectAndCount<_T>* m_objectAndCount;
+};

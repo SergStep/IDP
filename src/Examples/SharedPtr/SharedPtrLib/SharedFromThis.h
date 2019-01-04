@@ -16,9 +16,9 @@ public:
     template<typename... Args>
     idp::SharedPtr<T> GetShared()
     {
-        return idp::SharedPtr<T>(reinterpret_cast<T*>(this), &m_counts);
+        return idp::SharedPtr<T>(reinterpret_cast<T*>(this), &m_ptrUtils);
     }
 
 protected:
-    Counts* m_counts = nullptr;
+    Units<T>* m_ptrUtils = nullptr;
 };

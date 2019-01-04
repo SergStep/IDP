@@ -61,7 +61,7 @@ int main()
         idp::WeakPtr<TestUnit> weakPtr;
         std::cout << "weakPtr " << weakPtr.GetCount() << std::endl;
         {
-            idp::SharedPtr<TestUnit> sharedPtr = idp::SharedPtr<TestUnit>::MakeShared("Weak Ptr TestUnit");
+            idp::SharedPtr<TestUnit> sharedPtr = idp::SharedPtr<TestUnit>::MakeShared("Weak Ptr");
             std::cout << "sharedPtr " << sharedPtr.GetCount() << std::endl;
             std::cout << "weakPtr " << weakPtr.GetCount() << std::endl;
 

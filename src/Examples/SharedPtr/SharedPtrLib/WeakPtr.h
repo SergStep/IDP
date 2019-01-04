@@ -13,30 +13,24 @@ namespace idp
     {
     public:
         WeakPtr()
-            : m_ptrToObject(nullptr)
-            , m_countsOfObjects(nullptr)
+            : m_units(new Units<T>())
         {
         }
         WeakPtr(T* ptr)
-            : m_ptrToObject(ptr)
-            , m_countsOfObjects(new Counts(0, 1))
+            : m_units(new Units<T>(ptr, new Counts(0, 1)))
         {
         }
 
         WeakPtr(const WeakPtr<T>& other)
-            : m_ptrToObject(other.m_ptrToObject)
-            , m_countsOfObjects(other.m_countsOfObjects)
+            : m_units(other.m_units)
         {
-            (m_countsOfObjects->m_weakCount) ++;
+            (m_units->m_countsOfObjects->m_weakCount) ++;
         }
 
         WeakPtr(const SharedPtr<T>& other)
-            : m_ptrToObject(other.m_ptrToObject)
-            , m_countsOfObjects(other.m_countsOfObjects)
-            , m_objectAndCount(other.m_objectAndCount)
-            , m_isFromThis(other.m_isFromThis)
+            : m_units(other.m_units)
         {
-            (m_countsOfObjects->m_weakCount) ++;
+            (m_units->m_countsOfObjects->m_weakCount) ++;
         }
 
         WeakPtr<T> operator=(const WeakPtr<T>& other)
@@ -48,9 +42,8 @@ namespace idp
 
             Decrement();
 
-            m_ptrToObject = other.m_ptrToObject;
-            m_countsOfObjects = other.m_countsOfObjects;
-            (m_countsOfObjects->m_weakCount) ++;
+            m_units = other.m_units;
+            (m_units->m_countsOfObjects->m_weakCount) ++;
 
             return *this;
         }
@@ -59,10 +52,8 @@ namespace idp
         {
             Decrement();
 
-            m_ptrToObject = other.m_ptrToObject;
-            m_countsOfObjects = other.m_countsOfObjects;
-            m_objectAndCount = other.m_objectAndCount;
-            (m_countsOfObjects->m_weakCount) ++;
+            m_units = other.m_units;
+            (m_units->m_countsOfObjects->m_weakCount) ++;
 
             return *this;
         }
@@ -79,12 +70,12 @@ namespace idp
 
         size_t GetCount() const
         {
-            if(m_countsOfObjects == nullptr)
+            if(m_units == nullptr || m_units->m_countsOfObjects == nullptr)
             {
                 return 0;
             }
 
-            return m_countsOfObjects->m_countsOfObjects;
+            return m_units->m_countsOfObjects->m_countsOfObjects;
         }
 
     private:
@@ -92,24 +83,22 @@ namespace idp
 
         void Decrement()
         {
-            if (m_countsOfObjects == nullptr)
+            if (m_units == nullptr || m_units->m_countsOfObjects == nullptr)
             {
                 return;
             }
 
-            if (m_countsOfObjects->m_weakCount != 1)
+            if (m_units->m_countsOfObjects->m_weakCount != 1)
             {
-                (m_countsOfObjects->m_weakCount) --;
+                (m_units->m_countsOfObjects->m_weakCount) --;
                 return;
             }
 
-            delete m_countsOfObjects;
+            delete m_units->m_countsOfObjects;
+            delete m_units;
         }
 
     private:
-        T* m_ptrToObject;
-        Counts* m_countsOfObjects;
-        ObjectAndCount<T>* m_objectAndCount = nullptr;
-        bool m_isFromThis = false;
+        Units<T>* m_units;
     };
 }
